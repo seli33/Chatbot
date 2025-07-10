@@ -1,0 +1,6 @@
+{
+  "files.exclude": {
+    "**/.env": false
+  },
+  "python.REPL.enableREPLSmartSend": false
+}
