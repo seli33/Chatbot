@@ -24,12 +24,17 @@ llm=ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest",google_api_key=GOOGLE
 memory=ConversationBufferMemory(memory_key="chat_history",return_messages=True)
 qa_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memory=memory)
 
-# Streamlit Interface
-st.title("Document QA Chatbot")
+# form state
 if "messages" not in st.session_state:
     st.session_state.messages=[]
 
-    # Show chat history
+if"form_state " not in st.session_state:
+    st.session_state.form_state={"step":0,"name":"","email":"","phone":"","date":""}
+
+# Streamlit UI
+st.title("Chatbot: Ask & Book")
+
+# Show chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
@@ -40,6 +45,12 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
+
+intent_keywords=["call","book","appointment","schedule"]
+#intent detection of the user_input
+intent_triggered=any(word in user_input.lower() for word in intent_keywords)
+
+
     response = qa_chain.run(user_input)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
