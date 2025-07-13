@@ -1,4 +1,6 @@
 import os
+import re
+import dateparser
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.chains import ConversationalRetrievalChain
@@ -47,11 +49,69 @@ if user_input:
         st.markdown(user_input)
 
 intent_keywords=["call","book","appointment","schedule"]
-#intent detection of the user_input
-intent_triggered=any(word in user_input.lower() for word in intent_keywords)
+if user_input is not None:
+    intent_triggered = any(word in str(user_input).lower() for word in intent_keywords)
+else:
+    intent_triggered = False
 
 
-    response = qa_chain.run(user_input)
+#form when it is triggered
+if intent_triggered or st.session_state.form_state["step"]>0:
+    step=st.session_state.form_state["step"]
+    if step==0:
+        st.session_state.form_state["step"]+=1
+        bot_msg="Enter your full name"
+    elif step ==1:
+        st.session_state.form_state["name"]=user_input
+        st.session_state.form_state["step"]+=1
+        bot_msg="Enter your email"
+    elif step==2:
+        if re.match(r"[a-zA-Z0-9_.+-]+@[a-zA-Z]+\.[a-zA-Z]+$",user_input):
+            st.session_state.form_state["email"]=user_input
+            st.session_state.form_state["step"] += 1
+            bot_msg = "Thanks! What's your phone number?"
+        else:
+            bot_msg="Please, Enter a valid email"
+    elif step ==3:
+        if re.match(r"^\+?\d{7,15}$",user_input):
+            st.session_state.form_state["phone"] = user_input
+            st.session_state.form_state["step"] += 1
+            bot_msg = "And what date do you want to book? (e.g., next Monday)"
+        else:
+            bot_msg = "Please enter a valid phone number:"
+    elif step == 4:
+        parsed_date=dateparser.parse(user_input)
+        if parsed_date:
+                date_str = parsed_date.strftime("%Y-%m-%d")
+                st.session_state.form_state["date"] = date_str
+                st.session_state.form_state["step"] += 1
+                # Booking confirmation
+                data = st.session_state.form_state
+                bot_msg = (
+                    f"Appointment booked!\n\n"
+                    f"**Name:** {data['name']}\n"
+                    f"**Email:** {data['email']}\n"
+                    f"**Phone:** {data['phone']}\n"
+                    f"**Date:** {data['date']}"
+                )
+        else:
+            bot_msg = "Sorry, I couldn't understand that date. Try something like 'tomorrow' or '2025-07-15'."
+    else:
+            bot_msg = "Appointment already booked."
+    
+    st.session_state.messages.append({"role": "assistant", "content": bot_msg})
+    with st.chat_message("assistant"):
+        st.markdown(bot_msg)
+
+    if user_input.lower().strip()=="restart":
+        st.session_state.form_state={"step": 0, "name": "", "email": "", "phone": "", "date": ""}
+
+else:
+    if user_input and user_input.strip():
+        response = qa_chain.run(user_input)
+
+    else:
+        response = "Please provide a valid question."
 
     st.session_state.messages.append({"role": "assistant", "content": response})
     with st.chat_message("assistant"):
