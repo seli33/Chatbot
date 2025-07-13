@@ -2,3 +2,4 @@
 __pycache__/
 *.db
 langchain-env/
+credentials.json
