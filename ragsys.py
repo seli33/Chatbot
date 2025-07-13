@@ -30,8 +30,8 @@ qa_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memor
 if "messages" not in st.session_state:
     st.session_state.messages=[]
 
-if"form_state " not in st.session_state:
-    st.session_state.form_state={"step":0,"name":"","email":"","phone":"","date":""}
+if "form_state" not in st.session_state:
+    st.session_state.form_state = {"step": 0, "name": "", "email": "", "phone": "", "date": ""}
 
 # Streamlit UI
 st.title("Chatbot: Ask & Book")
@@ -60,7 +60,7 @@ if intent_triggered or st.session_state.form_state["step"]>0:
     step=st.session_state.form_state["step"]
     if step==0:
         st.session_state.form_state["step"]+=1
-        bot_msg="Enter your full name"
+        bot_msg="SURE! Enter your full name for the session"
     elif step ==1:
         st.session_state.form_state["name"]=user_input
         st.session_state.form_state["step"]+=1
@@ -76,7 +76,7 @@ if intent_triggered or st.session_state.form_state["step"]>0:
         if re.match(r"^\+?\d{7,15}$",user_input):
             st.session_state.form_state["phone"] = user_input
             st.session_state.form_state["step"] += 1
-            bot_msg = "And what date do you want to book? (e.g., next Monday)"
+            bot_msg = "And what date do you want to book? (e.g.,year-month-day OR next Monday)"
         else:
             bot_msg = "Please enter a valid phone number:"
     elif step == 4:
@@ -88,10 +88,10 @@ if intent_triggered or st.session_state.form_state["step"]>0:
                 # Booking confirmation
                 data = st.session_state.form_state
                 bot_msg = (
-                    f"Appointment booked!\n\n"
-                    f"**Name:** {data['name']}\n"
-                    f"**Email:** {data['email']}\n"
-                    f"**Phone:** {data['phone']}\n"
+                    f"Appointment booked for:\n\n"
+                    f"**Name:** {data['name']}\n\n"
+                    f"**Email:** {data['email']}\n\n"
+                    f"**Phone:** {data['phone']}\n\n"
                     f"**Date:** {data['date']}"
                 )
         else:
@@ -111,7 +111,7 @@ else:
         response = qa_chain.run(user_input)
 
     else:
-        response = "Please provide a valid question."
+        response = "Ask a question."
 
     st.session_state.messages.append({"role": "assistant", "content": response})
     with st.chat_message("assistant"):
