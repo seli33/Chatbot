@@ -14,17 +14,26 @@ load_dotenv()
 GOOGLE_API_KEY=os.getenv("GOOGLE_API_KEY",None)
 assert GOOGLE_API_KEY, "GOOGLE_API_KEY not found in .env file"
 
-loader=PyPDFLoader("linear_regression.pdf")
-pages=loader.load()
+uploaded_file=st.file_uploader("Upload a pdf document",type="pdf")
+if uploaded_file is not None:
+    with open("temp_uploaded.pdf","wb") as f:
+        f.write(uploaded_file.read())
 
-# Embedding and Vector Store
-embeddings=GoogleGenerativeAIEmbeddings(model="models/embedding-001",google_api_key=GOOGLE_API_KEY)
-db=FAISS.from_documents(pages,embeddings)
-retriever=db.as_retriever()
+    loader=PyPDFLoader("temp_uploaded.pdf")
+    pages=loader.load()
 
-llm=ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest",google_api_key=GOOGLE_API_KEY)
-memory=ConversationBufferMemory(memory_key="chat_history",return_messages=True)
-qa_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memory=memory)
+    # Embedding and Vector Store
+    embeddings=GoogleGenerativeAIEmbeddings(model="models/embedding-001",google_api_key=GOOGLE_API_KEY)
+    db=FAISS.from_documents(pages,embeddings)
+    retriever=db.as_retriever()
+
+    llm=ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest",google_api_key=GOOGLE_API_KEY)
+    memory=ConversationBufferMemory(memory_key="chat_history",return_messages=True)
+    qa_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memory=memory)
+
+    st.success("Document uploaded and ready for questions!")
+else:
+    st.warning("Please upload a PDF document to get started.")
 
 # form state
 if "messages" not in st.session_state:
@@ -111,7 +120,7 @@ else:
         response = qa_chain.run(user_input)
 
     else:
-        response = "Ask a question."
+        response = "Ask a question or book an appointment."
 
     st.session_state.messages.append({"role": "assistant", "content": response})
     with st.chat_message("assistant"):
