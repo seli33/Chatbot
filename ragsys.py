@@ -57,7 +57,8 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
-intent_keywords=["call","book","appointment","schedule"]
+intent_keywords=["call","appointment","schedule"]
+
 if user_input is not None:
     intent_triggered = any(word in str(user_input).lower() for word in intent_keywords)
 else:
