@@ -110,8 +110,8 @@ def pdf_qa_tool(question: str) -> str:
 
 agent = None
 
-# === STREAMLIT UI ===
-st.title("Chatbot: Ask Questions & Book Appointment")
+# ui using streamlit 
+st.title("Chatbot: Ask Questions/Book Appointment")
 
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
@@ -141,10 +141,15 @@ user_input = st.chat_input("Ask something or book an appointment...")
 if user_input:
     st.session_state["messages"].append({"role": "user", "content": user_input})
 
-    if agent is None:
-        response = "Please upload a PDF first."
+    # Check if appointment form is active (step > 0 and not finished)
+    if appointment_form.state["step"] > 0 and appointment_form.state["step"] < 5:
+        # Run the appointment form step manually, bypassing the agent
+        response = appointment_form.run(user_input)
     else:
-        response = agent.run(user_input)
+        if agent is None:
+            response = "Please upload a PDF first."
+        else:
+            response = agent.run(user_input)
 
     st.session_state["messages"].append({"role": "assistant", "content": response})
 
